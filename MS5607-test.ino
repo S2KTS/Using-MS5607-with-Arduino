@@ -3,16 +3,18 @@
 #include <Wire.h>
 #include <MS5xxx.h>
 
-unsigned int sPres = 1013.25; // 当日の気圧
+unsigned int sPres = 1026.6; // 当日の気圧
 
 MS5xxx sensor(&Wire);
 
 void setup() {
   Serial.begin(9600);
-  if (sensor.connect() > 0) {
+  if (sensor.connect()>0) {
     Serial.println("Error connecting...");
     delay(500);
     setup(); // 接続再試行
+  } else {
+    test_crc(); // CRCチェック
   }
 }
 
@@ -34,6 +36,22 @@ void loop() {
   Serial.println("---");
 
   delay(5000); // あんま通信されてもうるさいので5秒ごとに更新
+}
+
+void test_crc() {
+  sensor.ReadProm();
+  sensor.Readout();
+
+  Serial.println("------\n");
+  Serial.print("CRC = 0x");
+  Serial.print(sensor.Calc_CRC4(), HEX);
+  Serial.print(" (should be 0x");
+  Serial.print(sensor.Read_CRC4(), HEX);
+  Serial.print(")\n");
+  Serial.print("Test Code CRC = 0x");
+  Serial.print(sensor.CRCcodeTest(), HEX);
+  Serial.println(" (should be 0xB)");
+  Serial.println("------\n");
 }
 
 float getHeight(float temperature, float pressure) {
